@@ -109,27 +109,25 @@ func (m *Miniredis) cmdAuth(c *server.Peer, cmd string, args []string) {
 
 // HELLO
 func (m *Miniredis) cmdHello(c *server.Peer, cmd string, args []string) {
-	if len(args) < 1 {
-		c.WriteError(errWrongNumber(cmd))
-		return
-	}
-
 	var opts struct {
 		version  int
 		username string
 		password string
 	}
+	opts.version = 2
 
-	if ok := optIntErr(c, args[0], &opts.version, "ERR Protocol version is not an integer or out of range"); !ok {
-		return
-	}
-	args = args[1:]
+	if len(args) > 0 {
+		if ok := optIntErr(c, args[0], &opts.version, "ERR Protocol version is not an integer or out of range"); !ok {
+			return
+		}
+		args = args[1:]
 
-	switch opts.version {
-	case 2, 3:
-	default:
-		c.WriteError("NOPROTO unsupported protocol version")
-		return
+		switch opts.version {
+		case 2, 3:
+		default:
+			c.WriteError("NOPROTO unsupported protocol version")
+			return
+		}
 	}
 
 	var checkAuth bool
@@ -177,7 +175,7 @@ func (m *Miniredis) cmdHello(c *server.Peer, cmd string, args []string) {
 	c.WriteBulk("server")
 	c.WriteBulk("miniredis")
 	c.WriteBulk("version")
-	c.WriteBulk("6.0.5")
+	c.WriteBulk("6.2.0")
 	c.WriteBulk("proto")
 	c.WriteInt(opts.version)
 	c.WriteBulk("id")

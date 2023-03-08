@@ -287,9 +287,19 @@ func TestHello(t *testing.T) {
 		ok(t, err)
 		defer c.Close()
 
-		payl := proto.Map(
+		payl2 := proto.Array(
 			proto.String("server"), proto.String("miniredis"),
-			proto.String("version"), proto.String("6.0.5"),
+			proto.String("version"), proto.String("6.2.0"),
+			proto.String("proto"), proto.Int(2),
+			proto.String("id"), proto.Int(42),
+			proto.String("mode"), proto.String("standalone"),
+			proto.String("role"), proto.String("master"),
+			proto.String("modules"), proto.Array(),
+		)
+
+		payl3 := proto.Map(
+			proto.String("server"), proto.String("miniredis"),
+			proto.String("version"), proto.String("6.2.0"),
 			proto.String("proto"), proto.Int(3),
 			proto.String("id"), proto.Int(42),
 			proto.String("mode"), proto.String("standalone"),
@@ -298,29 +308,30 @@ func TestHello(t *testing.T) {
 		)
 
 		mustDo(t, c,
+			"HELLO",
+			payl2,
+		)
+
+		mustDo(t, c,
 			"HELLO", "3", "AUTH", "default", "secret",
-			payl,
+			payl3,
 		)
 
 		s.RequireAuth("secret")
 		mustDo(t, c,
 			"HELLO", "3", "AUTH", "default", "secret",
-			payl,
+			payl3,
 		)
 		mustDo(t, c,
 			"HELLO", "3", "AUTH", "default", "secret", "SETNAME", "santa",
-			payl,
+			payl3,
 		)
 		mustDo(t, c,
 			"HELLO", "3", "SETNAME", "santa",
-			payl,
+			payl3,
 		)
 
 		t.Run("errors", func(t *testing.T) {
-			mustDo(t, c,
-				"HELLO",
-				proto.Error(errWrongNumber("HELLO")),
-			)
 			mustDo(t, c,
 				"HELLO", "foo",
 				proto.Error("ERR Protocol version is not an integer or out of range"),
